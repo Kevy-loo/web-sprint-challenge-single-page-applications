@@ -2,13 +2,13 @@ import React from "react";
 import {Switch, Route, Link} from 'react-router-dom';
 import axios from "axios";
 import * as yup from 'yup';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const formSchema = yup.object().shape({
   name: yup
   .string()
   .required("name is required")
-  .min(2, "name must be at least two characters"), 
+  .min(2, "name must be at least 2 characters"), 
   dropdown: yup
   .string()
   .required("Please choose a size")
@@ -22,7 +22,7 @@ const formSchema = yup.object().shape({
 
 const initialFormState = {
   name: '',
-  dropdown: 'firstOption',
+  dropdown: '',
   pepperoni: false,
   mushroom: false,
   sausage: false,
@@ -49,48 +49,52 @@ const App = () => {
 
   const [errors, setErrors] = useState(initialFormErrors);
   const [disabled, setDisabled] = useState(true);
-
+  
   const validate = (name, value) => {
     yup
-      .reach(formSchema, name)
-      .validate(value)
-      .then(() => {
-        console.log('form is good')
-        setErrors({...errors, [name]: ''})
-        setDisabled(false)
-      })
-      .catch((err) => {
-        console.log(err.errors)
-        setErrors({...errors, [name]: err.errors[0]})
-        setDisabled(true)
-        console.log('form is not good')
-      })
-
+    .reach(formSchema, name)
+    .validate(value)
+    .then(() => {
+      console.log('form is good')
+      setErrors({...errors, [name]: ''})
+      setDisabled(false)
+    })
+    .catch((err) => {
+      console.log(err.errors)
+      setErrors({...errors, [name]: err.errors[0]})
+      setDisabled(true)
+      console.log('form is not good')
+    })
+    
   }
-
+  
+  
+  
   const submitHandler = (evt) => {
     evt.preventDefault();
-    axios.post('https://reqres.in/api/orders', form)
+    axios.post('https://reqres.in/', form)
     .then((res) => {
+      console.log(res.data)
       setOrder(res.data)
+      setForm(initialFormState)
       
-    }).catch(err => console.error(err))
-    setForm(initialFormState)
+    }).catch(console.log('error'))
   }
-
-
-
-
+  
+  
+  
+  
   const changeHandler = (evt) => {
     const value = evt.target.type === 'checkbox' ? evt.target.checked : evt.target.value;
     setForm({...form, [evt.target.name]: evt.target.value });
-    validate(evt.target.name, evt.target.value)
-    console.log(evt.target.name, evt.target.value);
-
-
-
+    validate(evt.target.name, value)
+    
+    
+    
+    
   }
 
+  
   return (
     <>
       <h1>Lambda Eats</h1>
@@ -99,7 +103,7 @@ const App = () => {
       </nav>
       <Switch>
         <Route exact path="/pizza">
-          <form id="pizza-form" onSubmit={submitHandler}>
+          <form id="pizza-form" onSubmit={submitHandler} >
             <label>
               Name
               <input
@@ -108,6 +112,7 @@ const App = () => {
               id="name-input" 
               value={form.name} 
               type="text"/>
+
             </label>
             <label>
               Size?
@@ -184,6 +189,7 @@ const App = () => {
 
         </Route>
       </Switch>
+      <p>{order.name}</p>
 
       <p>You can remove this code and create your own header</p>
     </>
